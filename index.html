@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derek Guo</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .font-heading {
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1e40af', 
+                        'secondary-green': '#059669', 
+                        'gray-bg': '#f7f9fb',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-primary-blue flex items-center font-heading">
+                Derek Guo
+            </a>
+
+            <button class="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition duration-150" onclick="toggleMenu()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white px-4 pt-2 pb-4 space-y-2">
+            <a href="#skills" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Skills</a>
+            <a href="#projects" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Projects</a>
+            <a href="#recommendation" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Testimonial</a>
+            <a href="#contact" class="block py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Contact</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="bg-gray-bg pt-16 pb-12 sm:pt-24 sm:pb-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-12">
+                <div class="text-center md:text-left md:w-3/5">
+                    <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 font-heading">
+                        Hi, I'm <span class="text-primary-blue">Derek Guo</span>.
+                    </h1>
+                    <p class="text-xl sm:text-2xl text-gray-600 mb-4 max-w-3xl md:max-w-full mx-auto md:mx-0">
+                        I'm a physics researcher at UB and junior at CPPHS passionate about developments in STEM and the future it has to offer.
+                    </p>
+                    <p class="text-sm font-medium text-gray-500 mb-4">🇺🇸 Corning, NY, USA</p>
+                </div>
+
+                <div class="flex justify-center md:justify-end md:w-2/5 mb-10 md:mb-0">
+                    <img src="headshot.jpeg" alt="Derek Guo Professional Headshot" class="w-64 h-64 sm:w-80 sm:h-80 object-cover rounded-full shadow-2xl border-4 border-white transform hover:scale-105 transition duration-500">
+                </div>
+            </div>
+        </section>
+
+        <section id="highlights" class="py-12 bg-white px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Left Column (Current Research) -->
+                    <div class="md:col-span-2">
+                        <div class="h-full p-8 bg-gray-50 rounded-3xl shadow-lg border border-gray-100 flex flex-col justify-center transition duration-300 hover:shadow-xl hover:scale-[1.005] origin-top">
+                            <span class="text-4xl font-black mb-4 text-primary-blue leading-none font-heading">Current Research</span>
+                            <p class="text-gray-600 text-lg leading-relaxed">
+                                I am presently working with Professor Xin Yong's SaIL lab at the University at Buffalo to spearhead the development of simulations investigating nanoparticle transport within polymer networks under a periodic shear, 
+                                aiming to better understand interactions that play a vital role in enhanced drug delivery, filtration systems, and a myriad of other areas that impact our daily lives.
+                                I primarily work with the Python programming language and open-source software such as LAMMPS and OVITO.
+                                My work will be used to complement and validate experimental results to achieve a comprehensive characterization of the effect of shear on nanoparticle diffusion.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (Stacked Small Boxes) -->
+                    <div class="flex flex-col gap-6">
+                        <!-- SAT Score -->
+                        <div class="flex-1 p-6 bg-gray-50 rounded-3xl shadow-md border border-gray-100 flex flex-col justify-center items-center text-center transition duration-300 hover:shadow-xl hover:scale-[1.005] origin-top">
+                            <span class="text-5xl font-black text-primary-blue leading-none font-heading">1580</span>
+                            <span class="text-sm font-medium text-gray-500 mt-2">SAT score</span>
+                        </div>
+                        
+                        <!-- Split Box (Awards) -->
+                        <div class="flex-1 p-6 bg-gray-50 rounded-3xl shadow-md border border-gray-100 flex flex-col justify-center text-center transition duration-300 hover:shadow-xl hover:scale-[1.005] origin-top">
+                            <div class="py-2">
+                                <span class="text-xl font-black text-primary-blue leading-none font-heading">USNCO Qualifier</span>
+                            </div>
+                            <div class="mx-auto w-3/4 border-t border-gray-300 my-1"></div>
+                            <div class="py-2">
+                                <span class="text-xl font-black text-primary-blue leading-none font-heading">NYSSMA All-State</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resume Button (Spans full width below every box) -->
+                    <div class="md:col-span-3">
+                        <a href="resume.html" class="block w-full py-5 text-xl font-bold rounded-3xl text-white bg-secondary-green hover:bg-green-700 shadow-lg transition transform hover:scale-[1.02] duration-300 text-center font-heading">
+                            View Full Résumé
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="contact" class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-xl font-bold mb-4 text-secondary-green font-heading">Derek Guo</h4>
+                    <p class="text-gray-400 text-sm">Physics Researcher, Musician, Athlete</p>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 font-heading">Contact Info</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="mailto:djg6665@gmail.com" class="hover:text-white transition duration-150">djg6665@gmail.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-700 text-center text-gray-500 text-sm">
+                &copy; 2026 Derek Guo. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
