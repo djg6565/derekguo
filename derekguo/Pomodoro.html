@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    
+<script src="https://cdn.tailwindcss.com"></script>
+    
+<script src="https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.js"></script>
+    <style>
+        /* Custom font and base styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* --- THEME-DEPENDENT BASE STYLES (Controlled by JS) --- */
+        
+        /* P1 (CLASSIC) THEMES */
+        /* DARK MODE DEFAULTS */
+        body.dark-theme.pomodoro-bg { background-color: #181825; } /* Focus: Very Dark Blue/Grey */
+        body.dark-theme.break-bg { background-color: #1e3a34; } /* Rest: Dark Teal/Green */
+        
+        /* LIGHT MODE OVERRIDES */
+        body.light-theme.pomodoro-bg { background-color: #f3f4f6; } /* Focus: Very Light Gray */
+        body.light-theme.break-bg { background-color: #e5f0e9; } /* Rest: Very Light Green */
+
+        /* P2 (PRO) THEMES */
+        /* DARK MODE DEFAULTS */
+        body.dark-theme.pro-pomodoro-bg { background-color: #1e1825; } /* Focus: Very Dark Purple/Grey */
+        body.dark-theme.pro-break-bg { background-color: #181e25; } /* Rest: Dark Blue/Grey */
+        
+        /* LIGHT MODE OVERRIDES */
+        body.light-theme.pro-pomodoro-bg { background-color: #ebe4f5; } /* Focus: Very Light Purple */
+        body.light-theme.pro-break-bg { background-color: #e4f0f5; } /* Rest: Very Light Blue */
+        
+        /* --- GENERAL CUSTOM STYLES --- */
+        .top-tab-active {
+            border-bottom: 2px solid;
+            padding-bottom: 8px; /* Offset for border */
+        }
+        
+        /* Halo Effect for Purple Elements in Pro Section */
+        .purple-halo-text {
+            /* Subtle glow for the large timer text (Purple-500: #A855F7) */
+            text-shadow: 0 0 15px rgba(168, 85, 247, 0.7), 0 0 30px rgba(168, 85, 247, 0.3);
+        }
+        .blue-halo-text {
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.3);
+}
+        .white-halo-text {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.3);
+}
+
+
+        .purple-halo-button {
+            /* Stronger glow for the main button (Purple-600: #9333EA) */
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.8), 0 0 35px rgba(147, 51, 234, 0.4);
+        }
+        .purple-halo-icon {
+            /* Halo for the small icons using filter: drop-shadow */
+            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8));
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        .modal-content {
+            z-index: 1001;
+        }
+        .blue-halo-text {
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.3);
+}
+
+    </style>
+    <!-- Load Lucide icons for clean, modern interface -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="dark-theme pomodoro-bg transition-colors duration-500">
+
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+    <h1 id="app-title" class="text-5xl font-bold text-center text-white mt-32 mb-4">
+    LockIn Pro
+</h1>
+    <p class="text-center text-gray-300 text-sm italic mt-0">
+    an app by Derek Guo
+</p>
+
+
+<div class="min-h-screen flex flex-col items-center justify-start p-4">
+
+    
+        <!-- Header: Dual Timer Tabs -->
+        <header class="w-full max-w-lg mb-8">
+            <nav class="flex justify-center border-b border-gray-700/50 pb-2">
+                <div id="top-tab-1" class="cursor-pointer px-4 py-2 font-semibold text-gray-500 transition duration-300 hover:text-blue-400">Classic</div>
+                <div id="top-tab-2" class="cursor-pointer px-4 py-2 font-semibold text-gray-500 transition duration-300 hover:text-purple-400">Pro</div>
+            </nav>
+        </header>
+
+        <!-- Main Card Container -->
+        <main class="w-full max-w-lg bg-white/5 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/10 text-white transition-colors duration-500">
+            
+            <!-- --- App 1: Classic Pomodoro Content (p1) --- -->
+            <div id="p1-app-content">
+                
+                <!-- Status/Phase Display -->
+                <div id="p1-status" class="text-center text-xl font-medium mb-8 text-blue-400">Time to Focus!</div>
+
+                <!-- Timer Display -->
+                <div class="flex justify-center mb-8">
+                    <div id="p1-timer-display" class="text-[8rem] sm:text-[10rem] font-bold tracking-tighter text-blue-500 transition-colors duration-500">
+                        25:00
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex justify-center items-center space-x-4">
+                    <!-- Start/Pause Button -->
+                    <button id="p1-start-pause-btn" class="p1-control-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transform transition duration-150 active:scale-[0.98]">
+                        Start
+                    </button>
+                    
+                    <!-- Reset Button -->
+                    <button id="p1-reset-btn" class="p1-control-btn text-blue-500 hover:text-blue-400 p-3 rounded-full transition duration-300">
+                        <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
+                    </button>
+                    
+                    <!-- Settings Button -->
+                    <button id="p1-settings-btn" class="p1-control-btn text-blue-500 hover:text-blue-400 p-3 rounded-full transition duration-300">
+                        <i data-lucide="settings" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Pomodoro Counter and Mute Toggle -->
+                <div class="flex justify-between items-center mt-12 pt-4 border-t border-gray-700/50 text-gray-400">
+                    <span id="p1-cycle-count">Session: 0</span>
+                    <!-- Mute Toggle (Now just reflects global state, controlled by settings/click) -->
+                    <button id="p1-mute-btn" class="flex items-center space-x-2 hover:text-white transition duration-200">
+                        <i id="p1-mute-icon" data-lucide="volume-2" class="w-5 h-5"></i>
+                        <span class="text-sm">Sound</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- --- App 2: Pro Pomodoro Content (p2) --- -->
+            <div id="p2-app-content" class="hidden">
+                
+                <!-- Current Task Name Display -->
+                <div class="text-center mb-4">
+                    <span id="p2-current-task-name" class="text-2xl font-semibold text-gray-200">Set Up Your Schedule</span>
+                </div>
+                
+                <!-- Status/Phase Display -->
+                <div id="p2-status" class="text-center text-xl font-medium mb-8 text-purple-400">Sequence Ready</div>
+
+                <!-- Timer Display -->
+                <div class="flex justify-center mb-8">
+                    <!-- ADDED purple-halo-text CLASS -->
+                    <div id="p2-timer-display" class="text-[8rem] sm:text-[10rem] font-bold tracking-tighter text-purple-500 transition-colors duration-500 purple-halo-text">
+                        00:00
+                    </div>
+                </div>
+                
+                <!-- Task List Indicator -->
+                <div class="flex justify-center mb-8 space-x-2 text-gray-400">
+                    <span id="p2-task-indicator" class="text-base font-medium">Task 0 of 0</span>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex justify-center items-center space-x-4">
+                    <!-- Start/Pause Button -->
+                    <!-- ADDED purple-halo-button CLASS AND REMOVED default shadow-lg -->
+                    <button id="p2-start-pause-btn" class="p2-control-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl purple-halo-button transform transition duration-150 active:scale-[0.98]">
+                        Start
+                    </button>
+                    
+                    <!-- Reset Button -->
+                    <!-- ADDED purple-halo-icon CLASS -->
+                    <button id="p2-reset-btn" class="p2-control-btn text-purple-500 hover:text-purple-400 p-3 rounded-full transition duration-300 purple-halo-icon">
+                        <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
+                    </button>
+                    
+                    <!-- Settings Button (Now opens Task Editor) -->
+                    <!-- ADDED purple-halo-icon CLASS -->
+                    <button id="p2-settings-btn" class="p2-control-btn text-purple-500 hover:text-purple-400 p-3 rounded-full transition duration-300 purple-halo-icon" title="Edit Task List">
+                        <i data-lucide="list-plus" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Pomodoro Counter and Mute Toggle -->
+                <div class="flex justify-between items-center mt-12 pt-4 border-t border-gray-700/50 text-gray-400">
+                    <span id="p2-cycle-count">Sequence: Paused</span>
+                    <!-- Mute Toggle (Now just reflects global state, controlled by settings/click) -->
+                    <button id="p2-mute-btn" class="flex items-center space-x-2 hover:text-white transition duration-200">
+                        <i id="p2-mute-icon" data-lucide="volume-2" class="w-5 h-5"></i>
+                        <span class="text-sm">Sound</span>
+                    </button>
+                </div>
+            </div>
+
+            
+        </main>
+        
+        <!-- --- Modals (Shared Structure, Dynamic Content) --- -->
+
+        <!-- Settings/Task List Modal -->
+        <div id="settings-modal" class="hidden fixed inset-0 flex items-center justify-center modal-overlay">
+            <div id="modal-content" class="modal-content bg-gray-800 rounded-xl shadow-2xl p-6 w-11/12 max-w-lg text-white border border-gray-700 transform transition-all duration-300 scale-95 opacity-0">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                    <h2 class="text-2xl font-bold text-gray-200" id="modal-title"></h2>
+                    <button id="close-settings-modal" class="text-gray-400 hover:text-white transition">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                
+                <!-- Dynamic Content Container -->
+                <div id="modal-body-content" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <!-- Content injected by JS -->
+                </div>
+                
+                <div class="mt-6 text-right">
+                    <button id="save-settings-btn" class="font-semibold py-2 px-4 rounded-xl transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2" title="Save changes and apply to timer">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script type="module">
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Global instances for the two apps
+        let p1App;
+        let p2App;
+        let activeAppPrefix = 'p1'; // Track which app is currently active
+
+        // --- Core Audio Setup: GLOBAL MUTE STATE ---
+        let isMuted = false;
+        const synth = new Tone.Synth().toDestination();
+
+        function playDing() {
+            if (isMuted) return;
+
+            const gentleSynth = new Tone.Synth({
+                oscillator: { type: "sine" },
+                envelope: {
+                    attack: 0.5,
+                    decay: 1.5,
+                    sustain: 0.3,
+                    release: 2.0
+                }
+            }).toDestination();
+
+        // A soft, melodic arpeggio (C major chord)
+        gentleSynth.triggerAttackRelease("C4", "2n", Tone.now());
+        gentleSynth.triggerAttackRelease("E4", "2n", Tone.now() + 0.2);
+        gentleSynth.triggerAttackRelease("G4", "2n", Tone.now() + 0.4);
+        gentleSynth.triggerAttackRelease("C5", "4n", Tone.now() + 0.6);
+        gentleSynth.triggerAttackRelease("C4", "4n", Tone.now() + 1.0);
+        gentleSynth.triggerAttackRelease("E4", "2n", Tone.now() + 1.2);
+        gentleSynth.triggerAttackRelease("G4", "2n", Tone.now() + 1.4);
+        gentleSynth.triggerAttackRelease("C5", "4n", Tone.now() + 1.6);
+    }
+
+        
+        // --- Utility Functions ---
+
+        // Converts total seconds into minutes and seconds for display
+        function secondsToMinSec(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return { minutes, seconds };
+        }
+        
+        // Safely parses and converts minutes/seconds input values to total seconds
+        function convertToSeconds(minutesInput, secondsInput) {
+            // Use parseFloat to handle non-numerical input gracefully (e.g., "5a" becomes 5)
+            // Use Math.floor to handle decimal inputs (e.g., 5.5 becomes 5)
+            let mins = Math.floor(parseFloat(minutesInput || 0));
+            let secs = Math.floor(parseFloat(secondsInput || 0));
+
+            // Ensure non-negative and are valid numbers after parsing
+            mins = isNaN(mins) || mins < 0 ? 0 : mins;
+            secs = isNaN(secs) || secs < 0 ? 0 : secs;
+            
+            // If seconds exceeds 59, carry over to minutes
+            if (secs >= 60) {
+                mins += Math.floor(secs / 60);
+                secs = secs % 60;
+            }
+
+            return mins * 60 + secs;
+        }
+
+        // Helper method for generating the dual input structure for settings
+        function createTimeInput(idPrefix, label, minutes, seconds, color) {
+            const ringClass = color === 'blue' ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-purple-500 focus:border-purple-500';
+            
+            return `
+                <div class="flex justify-between items-center">
+                    <label for="${idPrefix}-mins" class="text-gray-300">${label}:</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="${idPrefix}-mins" min="0" class="w-16 text-center bg-gray-700 rounded-lg p-2 text-white focus:ring-2 ${ringClass}" placeholder="Min" value="${minutes}">
+                        <span class="text-gray-400 self-center">:</span>
+                        <input type="number" id="${idPrefix}-secs" min="0" max="59" class="w-16 text-center bg-gray-700 rounded-lg p-2 text-white focus:ring-2 ${ringClass}" placeholder="Sec" value="${seconds}">
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper function to generate a reusable toggle switch
+        function createToggle(id, label, isChecked, color) {
+            const colorClass = color === 'blue' ? 'bg-blue-600' : 'bg-purple-600';
+            const ringClass = color === 'blue' ? 'focus:ring-blue-500' : 'focus:ring-purple-500';
+
+            return `
+                <div class="flex justify-between items-center pt-4">
+                    <label for="${id}" class="text-gray-300">${label}:</label>
+                    <button id="${id}" type="button" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${ringClass} focus:ring-offset-gray-800 ${isChecked ? colorClass : 'bg-gray-600'}">
+                        <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${isChecked ? 'translate-x-5' : 'translate-x-0'}"></span>
+                    </button>
+                </div>
+            `;
+        }
+        
+        // --- PomodoroApp Class Definition ---
+        class PomodoroApp {
+            constructor(prefix) {
+                this.prefix = prefix;
+                this.isClassic = prefix === 'p1';
+                
+                // --- P1 (Classic) State: Durations are now stored in total seconds ---
+                this.initialDurations = {
+                    pomodoroSeconds: 25 * 60, // 25 min
+                    shortBreakSeconds: 5 * 60, // 5 min
+                    longBreakSeconds: 15 * 60, // 15 min
+                    longBreakInterval: 4 // remains simple number
+                };
+                this.currentPhase = 'pomodoro';
+                this.cycleCount = 0;
+                this.autoStart = false; // NEW: Auto-start setting
+
+                // --- P2 (Sequential) State: Durations are now stored in total seconds ---
+                this.taskList = [];
+                this.currentTaskIndex = 0;
+                this.isSequenceFinished = false;
+                this.proAutoStart = false; // NEW: Auto-start setting for Pro mode
+                
+                // --- Shared State ---
+                this.isPaused = true;
+                this.timeRemaining = this.isClassic ? this.initialDurations.pomodoroSeconds : 0;
+                this.intervalId = null;
+                this.isLightMode = false;
+                
+                // DOM elements
+                this.display = document.getElementById(`${prefix}-timer-display`);
+                this.status = document.getElementById(`${prefix}-status`);
+                this.startPauseBtn = document.getElementById(`${prefix}-start-pause-btn`);
+                this.resetBtn = document.getElementById(`${prefix}-reset-btn`);
+                this.settingsBtn = document.getElementById(`${prefix}-settings-btn`);
+                this.cycleCountEl = document.getElementById(`${prefix}-cycle-count`);
+                this.muteBtn = document.getElementById(`${prefix}-mute-btn`);
+                this.muteIcon = document.getElementById(`${prefix}-mute-icon`);
+                
+                // P2 Specific elements
+                if (!this.isClassic) {
+                    this.taskNameEl = document.getElementById('p2-current-task-name');
+                    this.taskIndicatorEl = document.getElementById('p2-task-indicator');
+                }
+
+                // Initial Setup
+                this.setupEventListeners();
+                this.resetTimer(false); // Initialize time remaining based on the app type
+                this.updateTheme(); // Initialize theme
+
+                // Global Mute Sync Listener (Applies to both)
+                this.muteBtn.addEventListener('click', this.toggleGlobalMute.bind(this));
+                this.updateMuteIcon();
+            }
+            
+            // --- Event Listeners ---
+            setupEventListeners() {
+                this.startPauseBtn.addEventListener('click', this.toggleStartPause.bind(this));
+                this.resetBtn.addEventListener('click', this.resetTimer.bind(this));
+                this.settingsBtn.addEventListener('click', this.openSettingsModal.bind(this));
+            }
+
+            // --- Time and Display Logic ---
+            updateDisplay() {
+                const minutes = Math.floor(this.timeRemaining / 60).toString().padStart(2, '0');
+                const seconds = (this.timeRemaining % 60).toString().padStart(2, '0');
+                this.display.textContent = `${minutes}:${seconds}`;
+            }
+
+            updateStatus() {
+                let statusText;
+                let statusColor;
+                let bgColorClass;
+                let isBreak;
+
+                if (this.isClassic) {
+                    isBreak = this.currentPhase.includes('break');
+                    statusColor = isBreak ? 'text-green-400' : 'text-blue-400';
+                    bgColorClass = isBreak ? 'break-bg' : 'pomodoro-bg';
+                    statusText = this.currentPhase === 'pomodoro' ? "Let's lock in!" :
+                                 this.currentPhase === 'short-break' ? 'Short break.' : 'Take a long rest.';
+                } else {
+                    // P2 (Sequential Timer)
+                    const currentTask = this.taskList[this.currentTaskIndex];
+                    if (this.isSequenceFinished) {
+                        statusText = "Sequence Complete!";
+                        statusColor = 'text-gray-400';
+                        bgColorClass = 'pro-pomodoro-bg';
+                        isBreak = false;
+                    } else if (currentTask) {
+                        isBreak = currentTask.isBreak;
+                        statusColor = isBreak ? 'text-purple-300' : 'text-purple-400';
+                        bgColorClass = isBreak ? 'pro-break-bg' : 'pro-pomodoro-bg';
+
+                        statusText = currentTask.isBreak ? 'Take a break!' : 'Lock in.';
+                        
+                        this.taskNameEl.textContent = currentTask.name;
+                        this.taskIndicatorEl.textContent = `Task ${this.currentTaskIndex + 1} of ${this.taskList.length}`;
+                        
+                    } else {
+                        // Task List is empty or index is invalid
+                        statusText = "Add tasks to set up your schedule";
+                        statusColor = 'text-purple-400';
+                        bgColorClass = 'pro-pomodoro-bg';
+                        isBreak = false;
+                        this.taskNameEl.textContent = "Schedule Empty";
+                        this.taskIndicatorEl.textContent = `Task 0 of 0`;
+                    }
+                }
+                
+                // Apply theme classes to body only if this is the active app
+                if (activeAppPrefix === this.prefix) {
+                    document.body.classList.remove('pomodoro-bg', 'break-bg', 'pro-pomodoro-bg', 'pro-break-bg');
+                    document.body.classList.add(bgColorClass);
+                }
+
+                // Update text color of the status bar
+                this.status.className = `text-center text-xl font-medium mb-8 ${statusColor}`;
+                this.status.textContent = statusText;
+
+                // Update timer display color based on theme
+                let timerColor;
+                if (this.isClassic) {
+                    timerColor = isBreak ? 'text-green-500' : 'text-blue-500';
+                } else {
+                    timerColor = isBreak ? 'text-purple-300' : 'text-purple-500';
+                }
+
+                // Dynamically remove/add Tailwind colors
+                this.display.classList.forEach(className => {
+                    if (className.startsWith('text-')) {
+                        this.display.classList.remove(className);
+                    }
+                });
+                this.display.classList.add(timerColor);
+                
+                // Update start button colors
+                let btnBgColor;
+                if (this.isClassic) {
+                    btnBgColor = isBreak ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700';
+                } else {
+                    btnBgColor = isBreak ? 'bg-purple-500 hover:bg-purple-600' : 'bg-purple-600 hover:bg-purple-700';
+
+                }
+                this.startPauseBtn.classList.forEach(className => {
+                    if (className.startsWith('bg-') || className.startsWith('hover:bg-')) {
+                        this.startPauseBtn.classList.remove(className);
+                    }
+                });
+                this.startPauseBtn.classList.add(...btnBgColor.split(' '));
+
+                // Update icon colors (P2 keeps purple for icons, P1 switches)
+                let iconColor;
+                if (this.isClassic) {
+                    iconColor = isBreak ? 'text-green-500 hover:text-green-400' : 'text-blue-500 hover:text-blue-400';
+                } else {
+                    iconColor = 'text-purple-500 hover:text-purple-300'; // Pro section always uses purple icons
+                }
+
+                [this.resetBtn, this.settingsBtn].forEach(btn => {
+                    btn.classList.forEach(className => {
+                        if (className.startsWith('text-') || className.startsWith('hover:text-')) {
+                            btn.classList.remove(className);
+                        }
+                    });
+                    btn.classList.add(...iconColor.split(' '));
+                });
+            }
+
+            nextPhase() {
+                playDing();
+                this.clearInterval();
+                
+                if (this.isClassic) {
+                    // P1 Logic (standard Pomodoro cycle)
+                    if (this.currentPhase === 'pomodoro') {
+                        this.cycleCount++;
+                        this.cycleCountEl.textContent = `Session: ${this.cycleCount}`;
+
+                        if (this.cycleCount % this.initialDurations.longBreakInterval === 0) {
+                            this.currentPhase = 'long-break';
+                            this.timeRemaining = this.initialDurations.longBreakSeconds;
+                        } else {
+                            this.currentPhase = 'short-break';
+                            this.timeRemaining = this.initialDurations.shortBreakSeconds;
+                        }
+                    } else {
+                        this.currentPhase = 'pomodoro';
+                        this.timeRemaining = this.initialDurations.pomodoroSeconds;
+                    }
+                    this.isPaused = true;
+                    this.updateStatus();
+                    this.updateDisplay();
+                    this.updateStartPauseButton();
+                    this.updateTitle();
+
+                    // NEW: Auto-Start Check
+                    if (this.autoStart) {
+                        this.toggleStartPause();
+                    }
+
+                } else {
+                    // P2 Logic (Sequential Task Timer)
+                    this.currentTaskIndex++;
+                    
+                    if (this.currentTaskIndex >= this.taskList.length) {
+                        this.isSequenceFinished = true;
+                        this.isPaused = true;
+                        this.timeRemaining = 0;
+                        this.cycleCountEl.textContent = 'Sequence: Complete!';
+                        this.updateStatus();
+                        this.updateDisplay();
+                        this.updateStartPauseButton();
+                        this.updateTitle();
+                    } else {
+                        const nextTask = this.taskList[this.currentTaskIndex];
+                        this.timeRemaining = nextTask.durationSeconds;
+                        this.isPaused = true;
+                        this.updateStatus();
+                        this.updateDisplay();
+                        this.updateStartPauseButton();
+                        this.updateTitle();
+                        this.cycleCountEl.textContent = `Sequence: Running`;
+
+                        // NEW: Auto-Start Check
+                        if (this.proAutoStart) {
+                            this.toggleStartPause();
+                        }
+                    }
+                }
+            }
+
+            // --- Control Handlers ---
+            toggleStartPause() {
+                if (this.isSequenceFinished && !this.isClassic) {
+                    // Prevent starting if sequence is finished
+                    return; 
+                }
+                
+                if (this.isPaused) {
+                    // If Pro timer is paused and has no time, but tasks exist, load the first task
+                    if (!this.isClassic && this.taskList.length === 0) {
+                        this.startPauseBtn.classList.add('hidden');
+                    } else if (!this.isClassic && this.isSequenceFinished) {
+                        this.startPauseBtn.classList.remove('hidden');
+                        this.startPauseBtn.textContent = 'Sequence Done';
+                        this.startPauseBtn.disabled = true;
+                    } else {
+                        this.startPauseBtn.classList.remove('hidden');
+                        this.startPauseBtn.textContent = this.isPaused ? 'Start' : 'Pause';
+                        this.startPauseBtn.disabled = false;
+                    }
+
+
+                    this.isPaused = false;
+                    this.intervalId = setInterval(this.tick.bind(this), 1000);
+                } else {
+                    this.isPaused = true;
+                    this.clearInterval();
+                }
+                this.updateStartPauseButton();
+            }
+
+            tick() {
+                this.timeRemaining--;
+                this.updateDisplay();
+                this.updateTitle();
+
+                if (this.timeRemaining <= 0) {
+                    this.nextPhase();
+                }
+            }
+
+            clearInterval() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+            }
+
+            resetTimer(silent = true) {
+                this.clearInterval();
+                this.isPaused = true;
+                
+                if (this.isClassic) {
+                    this.currentPhase = 'pomodoro';
+                    this.timeRemaining = this.initialDurations.pomodoroSeconds;
+                    this.cycleCount = 0;
+                    this.cycleCountEl.textContent = `Session: 0`;
+                } else {
+                    // P2 Logic
+                    this.currentTaskIndex = 0;
+                    this.isSequenceFinished = false;
+                    
+                    if (this.taskList.length > 0) {
+                        this.timeRemaining = this.taskList[0].durationSeconds;
+                        this.cycleCountEl.textContent = 'Sequence: Ready';
+                    } else {
+                        this.timeRemaining = 0;
+                        this.cycleCountEl.textContent = 'Sequence: Empty';
+                    }
+                    this.taskNameEl.textContent = this.taskList.length > 0 ? this.taskList[0].name : 'Set Up Your Schedule';
+                }
+                
+                this.updateDisplay();
+                this.updateStatus();
+                this.updateStartPauseButton();
+                if (!silent) this.updateTitle();
+            }
+
+            updateStartPauseButton() {
+                if (!this.isClassic && this.isSequenceFinished) {
+                    this.startPauseBtn.textContent = 'Sequence Done';
+                    this.startPauseBtn.disabled = true;
+                } else if (!this.isClassic && this.taskList.length === 0) {
+                    this.startPauseBtn.textContent = 'Add Tasks';
+                    this.startPauseBtn.disabled = true;
+                } else {
+                    this.startPauseBtn.textContent = this.isPaused ? 'Start' : 'Pause';
+                    this.startPauseBtn.disabled = false;
+                }
+            }
+
+            updateTitle() {
+                const minutes = Math.floor(this.timeRemaining / 60).toString().padStart(2, '0');
+                const seconds = (this.timeRemaining % 60).toString().padStart(2, '0');
+
+                let titlePhase;
+                if (this.isClassic) {
+                    titlePhase = this.currentPhase === 'pomodoro' ? 'Focus' : 'Break';
+                } else {
+                    const currentTask = this.taskList[this.currentTaskIndex];
+                    titlePhase = currentTask ? (currentTask.isBreak ? `Break: ${currentTask.name}` : `Task: ${currentTask.name}`) : 'Idle';
+                }
+
+                document.title = `(${minutes}:${seconds}) ${titlePhase} | Dual Pomodoro`;
+            }
+
+            // --- Theme and Activation ---
+            updateTheme() {
+                // P1 controls light/dark mode for the whole app
+                if (this.isClassic) {
+                    if (this.isLightMode) {
+                        document.body.classList.remove('dark-theme');
+                        document.body.classList.add('light-theme');
+                    } else {
+                        document.body.classList.remove('light-theme');
+                        document.body.classList.add('dark-theme');
+                    }
+                }
+            }
+
+            activateInstance() {
+                this.updateTheme(); 
+                this.updateStatus();
+                this.updateStartPauseButton();
+                this.updateMuteIcon();
+            }
+
+            // --- Mute Toggle (Controls global mute, applies to both) ---
+            toggleGlobalMute() {
+                isMuted = !isMuted;
+                // Update icons for both P1 and P2
+                p1App.updateMuteIcon();
+                p2App.updateMuteIcon();
+            }
+            
+            updateMuteIcon() {
+                const iconName = isMuted ? 'volume-x' : 'volume-2';
+                
+                // Update icon for this app
+                this.muteIcon.setAttribute('data-lucide', iconName);
+                // Also update the button's hover state based on mute status
+                if (isMuted) {
+                    this.muteBtn.classList.add('text-red-500', 'hover:text-red-400');
+                    this.muteBtn.classList.remove('text-gray-400', 'hover:text-white');
+                } else {
+                    this.muteBtn.classList.remove('text-red-500', 'hover:text-red-400');
+                    this.muteBtn.classList.add('text-gray-400', 'hover:text-white');
+                }
+
+                lucide.createIcons({ attrs: { width: 20, height: 20 } });
+            }
+
+            // --- Settings Modal Logic ---
+            openSettingsModal() {
+                const modal = document.getElementById('settings-modal');
+                const content = document.getElementById('modal-content');
+                const bodyContent = document.getElementById('modal-body-content');
+                
+                // Clear previous error messages
+                const errorEl = document.getElementById('p1-error-message') || document.getElementById('p2-error-message');
+                if (errorEl) errorEl.classList.add('hidden');
+
+                // Set modal title and dynamically load content based on app type
+                if (this.isClassic) {
+                    this.loadClassicSettings(bodyContent, content);
+                } else {
+                    this.loadProTaskEditor(bodyContent, content);
+                }
+                
+                // Show modal
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('opacity-0', 'scale-95');
+                    content.classList.add('opacity-100', 'scale-100');
+                }, 10);
+                
+                // Add event listeners for modal interactions once
+                const saveHandler = this.saveSettings.bind(this);
+                const closeHandler = this.closeSettingsModal.bind(this);
+
+                document.getElementById('save-settings-btn').onclick = saveHandler;
+                document.getElementById('close-settings-modal').onclick = closeHandler;
+                modal.onclick = (e) => {
+                    if (e.target === modal) closeHandler();
+                };
+            }
+            
+            closeSettingsModal() {
+                const modal = document.getElementById('settings-modal');
+                const content = document.getElementById('modal-content');
+                
+                content.classList.add('opacity-0', 'scale-95');
+                content.classList.remove('opacity-100', 'scale-100');
+
+                // Hide modal after transition and clean up
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.getElementById('modal-body-content').innerHTML = ''; // Clear dynamic content
+                    
+                    // Clean up handlers
+                    document.getElementById('save-settings-btn').onclick = null;
+                    document.getElementById('close-settings-modal').onclick = null;
+                    modal.onclick = null;
+                }, 300);
+            }
+            
+            saveSettings() {
+                if (this.isClassic) {
+                    // P1: Save Classic Durations and Settings
+                    const pMins = document.getElementById('pomodoro-duration-mins').value;
+                    const pSecs = document.getElementById('pomodoro-duration-secs').value;
+                    const sMins = document.getElementById('short-break-duration-mins').value;
+                    const sSecs = document.getElementById('short-break-duration-secs').value;
+                    const lMins = document.getElementById('long-break-duration-mins').value;
+                    const lSecs = document.getElementById('long-break-duration-secs').value;
+                    const newInterval = convertToSeconds(document.getElementById('long-break-interval').value, 0) / 60; // Just use minutes for interval
+                    
+                    const newPomodoroSeconds = convertToSeconds(pMins, pSecs);
+                    const newShortBreakSeconds = convertToSeconds(sMins, sSecs);
+                    const newLongBreakSeconds = convertToSeconds(lMins, lSecs);
+
+                    // Read Toggles
+                    this.isLightMode = document.getElementById('theme-toggle').classList.contains('bg-blue-600');
+                    this.autoStart = document.getElementById('p1-auto-start-toggle').classList.contains('bg-blue-600');
+                    // Mute is global, but its state is read from the toggle
+                    const newIsMuted = !document.getElementById('p1-mute-toggle').classList.contains('bg-blue-600');
+                    if (isMuted !== newIsMuted) {
+                        this.toggleGlobalMute();
+                    }
+                    
+                    // Validation
+                    const errorMessage = document.getElementById('p1-error-message');
+                    if (newPomodoroSeconds <= 0 || newShortBreakSeconds <= 0 || newLongBreakSeconds <= 0 || newInterval <= 0) {
+                        errorMessage.textContent = 'All durations (Min/Sec) and the long break interval must be greater than zero.';
+                        errorMessage.classList.remove('hidden');
+                        return; 
+                    }
+                    errorMessage.classList.add('hidden');
+
+                    this.initialDurations = {
+                        pomodoroSeconds: newPomodoroSeconds,
+                        shortBreakSeconds: newShortBreakSeconds,
+                        longBreakSeconds: newLongBreakSeconds,
+                        longBreakInterval: newInterval
+                    };
+                    
+                    this.updateTheme(); // Apply theme change immediately
+                    this.resetTimer();
+                    
+                } else {
+                    // P2: Save Task List and Settings
+                    const listContainer = document.getElementById('task-list-container');
+                    const taskElements = listContainer.querySelectorAll('.task-item');
+                    const newTaskList = [];
+                    let hasError = false;
+                    const errorMessage = document.getElementById('p2-error-message');
+
+                    taskElements.forEach(el => {
+                        const name = el.querySelector('.task-name').value.trim();
+                        const mins = el.querySelector('.task-duration-mins').value;
+                        const secs = el.querySelector('.task-duration-secs').value;
+                        const durationSeconds = convertToSeconds(mins, secs);
+                        const isBreak = el.classList.contains('bg-gray-700/50');
+                        const id = parseInt(el.dataset.id, 10);
+
+                        if (name === '' || durationSeconds <= 0) {
+                            el.classList.add('border-red-500'); // Highlight error
+                            hasError = true;
+                            return;
+                        }
+                        el.classList.remove('border-red-500');
+
+                        newTaskList.push({ name, durationSeconds, isBreak, id });
+                    });
+
+                    // Read Toggles
+                    this.proAutoStart = document.getElementById('p2-auto-start-toggle').classList.contains('bg-purple-600');
+                    const newIsMuted = !document.getElementById('p2-mute-toggle').classList.contains('bg-purple-600');
+                    if (isMuted !== newIsMuted) {
+                        this.toggleGlobalMute();
+                    }
+                    
+                    if (hasError) {
+                        errorMessage.textContent = 'Please fix errors: Task name must not be blank, and duration (Min/Sec) must be greater than zero.';
+                        errorMessage.classList.remove('hidden');
+                        return;
+                    }
+                    errorMessage.classList.add('hidden');
+                    
+                    this.taskList = newTaskList;
+                    this.resetTimer();
+                }
+
+                this.closeSettingsModal();
+            }
+            
+            // --- P1 Specific Modal Content ---
+            loadClassicSettings(bodyContent, content) {
+                document.getElementById('modal-title').textContent = 'Classic Settings';
+                const color = 'blue';
+
+                // Update input/button colors for P1
+                const saveBtn = document.getElementById('save-settings-btn');
+                saveBtn.className = saveBtn.className.split(' ').filter(c => !c.startsWith('bg-purple-') && !c.startsWith('hover:bg-purple-') && !c.startsWith('focus:ring-purple-')).join(' ');
+                saveBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'focus:ring-blue-500', 'focus:ring-offset-gray-800');
+                
+                // Convert stored seconds back to minutes/seconds for display
+                const { minutes: pMins, seconds: pSecs } = secondsToMinSec(this.initialDurations.pomodoroSeconds);
+                const { minutes: sMins, seconds: sSecs } = secondsToMinSec(this.initialDurations.shortBreakSeconds);
+                const { minutes: lMins, seconds: lSecs } = secondsToMinSec(this.initialDurations.longBreakSeconds);
+                const interval = this.initialDurations.longBreakInterval;
+
+                bodyContent.innerHTML = `
+                    <div id="p1-error-message" class="hidden p-3 bg-red-800 text-white rounded-xl text-sm font-medium"></div>
+                    <div class="space-y-4">
+                        <div class="text-xs text-gray-400 text-right font-medium">MIN : SEC</div>
+                        
+                        <!-- Duration Inputs -->
+                        ${createTimeInput('pomodoro-duration', 'Focus Duration', pMins, pSecs, color)}
+                        ${createTimeInput('short-break-duration', 'Short Break', sMins, sSecs, color)}
+                        ${createTimeInput('long-break-duration', 'Long Break', lMins, lSecs, color)}
+
+                        <!-- Long Break Interval -->
+                        <div class="flex justify-between items-center border-t border-gray-700 pt-4">
+                            <label for="long-break-interval" class="text-gray-300">Long Break Interval:</label>
+                            <input type="number" id="long-break-interval" min="1" max="10" class="w-20 text-center bg-gray-700 rounded-lg p-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="${interval}">
+                        </div>
+
+                        <!-- NEW: Auto Start Toggle -->
+                        ${createToggle('p1-auto-start-toggle', 'Auto Start Next Phase', this.autoStart, color)}
+                        
+                        <!-- NEW: Sound Toggle (Mute is stored globally) -->
+                        ${createToggle('p1-mute-toggle', 'Sound Alerts On', !isMuted, color)}
+
+                        <!-- Theme Toggle (Classic only) -->
+                        <div id="theme-setting-container" class="flex justify-between items-center border-t border-gray-700 pt-4">
+                            ${createToggle('theme-toggle', 'Light Theme', this.isLightMode, color)}
+                            <label class="text-gray-300">Light Theme</label>
+                        </div>
+                    </div>
+                `;
+                
+                // Set up event listeners for toggles
+                this.setupToggleListeners('p1', color);
+            }
+
+            // --- P2 Specific Task Editor Content ---
+            loadProTaskEditor(bodyContent, content) {
+                document.getElementById('modal-title').textContent = 'Pro Sequence Editor';
+                const color = 'purple';
+                
+                // Update input/button colors for P2
+                const saveBtn = document.getElementById('save-settings-btn');
+                saveBtn.className = saveBtn.className.split(' ').filter(c => !c.startsWith('bg-blue-') && !c.startsWith('hover:bg-blue-') && !c.startsWith('focus:ring-blue-')).join(' ');
+                saveBtn.classList.add('bg-purple-600', 'hover:bg-purple-700', 'focus:ring-purple-500', 'focus:ring-offset-gray-800');
+
+                bodyContent.innerHTML = `
+                    <div id="p2-error-message" class="hidden p-3 bg-red-800 text-white rounded-xl text-sm font-medium mb-4"></div>
+                    
+                    <div class="space-y-4 border-b border-gray-700 pb-4 mb-4">
+                        <!-- NEW: Auto Start Toggle -->
+                        ${createToggle('p2-auto-start-toggle', 'Auto Start Next Task', this.proAutoStart, color)}
+                        
+                        <!-- NEW: Sound Toggle (Mute is stored globally) -->
+                        ${createToggle('p2-mute-toggle', 'Sound Alerts On', !isMuted, color)}
+                    </div>
+
+                    <!-- Task List Controls -->
+                    <div class="flex justify-between items-center mb-4 sticky top-0 bg-gray-800 pb-2 z-10 border-b border-gray-700">
+                        <div class="flex space-x-2">
+                            <button id="add-task-btn" class="flex items-center space-x-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium py-2 px-3 rounded-xl transition shadow-md">
+                                <i data-lucide="plus" class="w-4 h-4"></i><span>Add Task</span>
+                            </button>
+                            <button id="add-break-btn" class="flex items-center space-x-2 bg-purple-300 hover:bg-purple-500 text-white text-sm font-medium py-2 px-3 rounded-xl transition shadow-md">
+                                <i data-lucide="coffee" class="w-4 h-4"></i><span>Add Break</span>
+                            </button>
+
+                        </div>
+                        <span class="text-sm text-gray-400">MIN : SEC</span>
+                    </div>
+                    
+                    <div id="task-list-container" class="space-y-3">
+                        <!-- Tasks will be rendered here -->
+                    </div>
+                `;
+                
+                lucide.createIcons(); // Render new icons in the modal
+
+                // Render initial tasks
+                this.renderTaskList();
+                
+                // Add event listeners for new buttons
+                document.getElementById('add-task-btn').addEventListener('click', () => this.addTask(false));
+                document.getElementById('add-break-btn').addEventListener('click', () => this.addTask(true));
+
+                // Set up event listeners for toggles
+                this.setupToggleListeners('p2', color);
+            }
+            
+            // --- Shared Toggle Listener Logic ---
+            setupToggleListeners(prefix, color) {
+                const colorClass = color === 'blue' ? 'bg-blue-600' : 'bg-purple-600';
+                const darkClass = 'bg-gray-600';
+                
+                const toggles = ['auto-start-toggle', 'mute-toggle', 'theme-toggle'];
+
+                toggles.forEach(toggleIdSuffix => {
+                    const id = `${prefix}-${toggleIdSuffix}`;
+                    const toggleEl = document.getElementById(id);
+                    if (toggleEl) {
+                        toggleEl.onclick = () => {
+                            const isCurrentlyChecked = toggleEl.classList.contains(colorClass);
+                            const indicator = toggleEl.querySelector('span');
+                            
+                            if (isCurrentlyChecked) {
+                                // Turn Off
+                                toggleEl.classList.remove(colorClass);
+                                toggleEl.classList.add(darkClass);
+                                indicator.classList.remove('translate-x-5');
+                                indicator.classList.add('translate-x-0');
+                            } else {
+                                // Turn On
+                                toggleEl.classList.remove(darkClass);
+                                toggleEl.classList.add(colorClass);
+                                indicator.classList.remove('translate-x-0');
+                                indicator.classList.add('translate-x-5');
+                            }
+                            
+                            // Special handling for theme toggle (P1 only)
+                            if (toggleIdSuffix === 'theme-toggle' && prefix === 'p1') {
+                                this.isLightMode = !isCurrentlyChecked;
+                                // Note: The actual body theme update happens on save, but this updates the local state
+                            }
+                            // Special handling for mute toggle (Global)
+                            if (toggleIdSuffix === 'mute-toggle') {
+                                // Mute toggle is "Sound Alerts On", so `isMuted` is the opposite
+                                const newIsMuted = !toggleEl.classList.contains(colorClass);
+                                if (isMuted !== newIsMuted) {
+                                    // Trigger the global change without affecting local settings states until save
+                                    p1App.toggleGlobalMute();
+                                }
+                            }
+                        };
+                    }
+                });
+            }
+
+            // --- P2 Task List Management ---
+            renderTaskList() {
+                const container = document.getElementById('task-list-container');
+                if (!container) return; // Only run if the modal content is loaded
+                
+                container.innerHTML = this.taskList.map((task, index) => {
+                    const isBreakClass = task.isBreak ? 'bg-gray-700/50 border-purple-300' : 'bg-gray-700 border-purple-500';
+
+                    const icon = task.isBreak ? 'coffee' : 'clipboard-list';
+                    const namePlaceholder = task.isBreak ? 'e.g., Lunch Break' : 'e.g., Coding Feature X';
+                    
+                    const { minutes, seconds } = secondsToMinSec(task.durationSeconds);
+                    
+                    return `
+                        <div class="task-item flex items-center p-3 rounded-xl border-2 ${isBreakClass}" data-id="${task.id}">
+                            <div class="w-5 mr-3 text-gray-400">
+                                <i data-lucide="grip-vertical" class="w-5 h-5 cursor-move"></i>
+                            </div>
+                            <i data-lucide="${icon}" class="w-5 h-5 mr-2 ${task.isBreak ? 'text-purple-200' : 'text-purple-400'}"></i>
+
+                                                        
+                            <input type="text" class="task-name flex-grow bg-transparent border-b border-gray-600 p-1 mr-3 focus:border-white outline-none" 
+                                value="${task.name}" placeholder="${namePlaceholder}">
+                            
+                            <div class="flex space-x-1">
+                                <input type="number" min="0" class="task-duration-mins w-12 text-center bg-gray-900 rounded-lg p-1 text-white focus:ring-1 focus:ring-white outline-none" placeholder="m" value="${minutes}">
+                                <span class="text-gray-400 self-center">:</span>
+                                <input type="number" min="0" max="59" class="task-duration-secs w-12 text-center bg-gray-900 rounded-lg p-1 text-white focus:ring-1 focus:ring-white outline-none" placeholder="s" value="${seconds}">
+                            </div>
+
+                            <button class="delete-task-btn text-gray-500 hover:text-red-500 ml-3 p-1 rounded-full transition" 
+                                data-id="${task.id}" title="Remove task">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                
+                lucide.createIcons();
+                
+                // Add event listeners for delete buttons
+                container.querySelectorAll('.delete-task-btn').forEach(button => {
+                    button.addEventListener('click', (e) => this.deleteTask(parseInt(e.currentTarget.dataset.id, 10)));
+                });
+            }
+
+            addTask(isBreak) {
+                const newTask = {
+                    name: isBreak ? 'Short Break' : 'Focus Task',
+                    durationSeconds: isBreak ? 10 * 60 : 30 * 60,
+                    isBreak: isBreak,
+                    id: Date.now()
+                };
+                this.taskList.push(newTask);
+                this.renderTaskList();
+            }
+
+            deleteTask(id) {
+                this.taskList = this.taskList.filter(task => task.id !== id);
+                this.renderTaskList();
+            }
+        }
+        
+        // --- Global Tab Switching Logic ---
+        function switchTopTab(newPrefix) {
+            
+            // Hide all app content divs
+            document.getElementById('p1-app-content').classList.add('hidden');
+            document.getElementById('p2-app-content').classList.add('hidden');
+
+            // Deactivate all top tabs (reset all to gray)
+            document.getElementById('top-tab-1').classList.remove('top-tab-active', 'text-blue-500', 'text-purple-500');
+            document.getElementById('top-tab-2').classList.remove('top-tab-active', 'text-blue-500', 'text-purple-500');
+            document.getElementById('top-tab-1').classList.add('text-gray-500');
+            document.getElementById('top-tab-2').classList.add('text-gray-500');
+
+            // Show the selected content
+            document.getElementById(`${newPrefix}-app-content`).classList.remove('hidden');
+
+            // Activate the selected top tab (set specific color)
+            const activeColor = newPrefix === 'p1' ? 'text-blue-500' : 'text-purple-500';
+            const activeTab = document.getElementById(`top-tab-${newPrefix.slice(1)}`);
+            activeTab.classList.add('top-tab-active', activeColor);
+            activeTab.classList.remove('text-gray-500');
+
+            // Update title glow based on active app
+            const titleEl = document.getElementById('app-title');
+            titleEl.classList.remove('purple-halo-text', 'blue-halo-text');
+            if (newPrefix === 'p1') {
+                titleEl.classList.add('blue-halo-text');
+            } else {
+                titleEl.classList.add('purple-halo-text');
+            }
+
+
+            activeAppPrefix = newPrefix;
+            
+            // Update the body theme/background to match the active app's state
+            const activeApp = newPrefix === 'p1' ? p1App : p2App;
+            if (activeApp) {
+                activeApp.activateInstance();
+            }
+        }
+
+        // Initialize the timer displays and styles on load
+        window.onload = () => {
+            // Initialize both applications
+            p1App = new PomodoroApp('p1');
+            p2App = new PomodoroApp('p2');
+            
+            // Set up top tab listeners
+            document.getElementById('top-tab-1').addEventListener('click', () => switchTopTab('p1'));
+            document.getElementById('top-tab-2').addEventListener('click', () => switchTopTab('p2'));
+            
+            // Ensure the initial state is correct (p1 active)
+            switchTopTab('p1'); 
+            
+            // Re-render icons after JS has had a chance to run
+            lucide.createIcons();
+
+            // Set initial mute icon states
+            p1App.updateMuteIcon();
+            p2App.updateMuteIcon();
+        };
+
+    </script>
+    <footer class="fixed bottom-2 left-0 right-0 text-center text-gray-500 text-xs">
+    © 2025 Derek Guo. All rights reserved.
+</footer>
+
+</body>
+</html>
